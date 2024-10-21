@@ -223,7 +223,10 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 # scene.save(iteration)
-                scene.save_compressed(iteration, quantize)
+                if args.save_compressed:
+                    scene.save_compressed(iteration, quantize)
+                else:
+                    scene.save(iteration)
 
             if iteration < opt.prune_until_iter:
                 gaussians.add_influence_stats(render_pkg["influence"])
@@ -595,6 +598,7 @@ if __name__ == "__main__":
     parser.add_argument('--retrain', action='store_true', default=False)
     parser.add_argument('--retest', action='store_true', default=False)
     parser.add_argument('--delete_pc', action='store_true', default=False)
+    parser.add_argument("--save_compressed", action="store_true")
 
     parser.add_argument("--render_iteration", default=-1, type=int)
     parser.add_argument("--skip_train", action="store_true")
