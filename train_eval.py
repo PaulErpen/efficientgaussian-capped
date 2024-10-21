@@ -13,8 +13,11 @@
 print("starting imports")
 
 import os
+print("loaded os")
 import json
+print("loaded json")
 import yaml
+print("loaded yaml")
 import torch
 print("loaded torch")
 import shutil
