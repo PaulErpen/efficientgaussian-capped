@@ -10,6 +10,8 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
+print("starting imports")
+
 import os
 import json
 import yaml
@@ -573,6 +575,7 @@ def evaluate(images, scene_dir, iteration, wandb_enabled=False):
     return full_dict
 
 if __name__ == "__main__":
+    print("Entering main")
 
     # Config file is used for argument defaults. Command line arguments override config file.
     config_path = sys.argv[sys.argv.index("--config")+1] if "--config" in sys.argv else None
