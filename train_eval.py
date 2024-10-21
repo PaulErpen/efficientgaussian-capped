@@ -42,6 +42,9 @@ from utils.general_utils import DecayScheduler
 from utils.image_utils import psnr, resize_image, downsample_image, blur_image
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeParams
+
+print("Loaded imports")
+
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -53,6 +56,8 @@ try:
     WANDB_FOUND = True
 except ImportError:
     WANDB_FOUND = False
+
+print("Loaded logging")
 
 def get_gpu_memory():
     command = "nvidia-smi --query-gpu=memory.used --format=csv"
