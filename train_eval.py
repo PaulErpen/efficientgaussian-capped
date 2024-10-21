@@ -74,7 +74,7 @@ def get_gpu_memory():
     return memory_used_values
 
 
-def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_iterations, checkpoint, debug_from, parse_args, tb_writer):
+def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_iterations, checkpoint, debug_from, parse_args, tb_writer, args):
     first_iter = 0
     generator = Random(0)
     wandb_enabled = WANDB_FOUND and parse_args.use_wandb
@@ -647,7 +647,7 @@ if __name__ == "__main__":
             print("Training complete at {}".format(args.model_path))
         else:
             training_time, best_iter = training(args.seed, lp_args, op_args, pp_args, qp_args, 
-                                                args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from, args, tb_writer)
+                                                args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from, args, tb_writer, args)
             full_dict = {args.model_path: {}}
             full_dict[args.model_path].update({"Training time": training_time})
             with open(os.path.join(args.model_path,"results_training.json"), 'w') as fp:
