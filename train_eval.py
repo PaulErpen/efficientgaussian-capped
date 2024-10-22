@@ -245,10 +245,12 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                 gaussians.add_influence_stats(render_pkg["influence"])
 
             # Densification
-            if iteration < opt.densify_until_iter:
+            if (iteration < opt.densify_until_iter
+                and (args.num_max is None or gaussians.get_xyz.shape[0] < args.num_max)):
                 # Keep track of max radii in image-space for pruning
-                if iteration <= opt.densify_from_iter or \
-                    (iteration > opt.densify_from_iter and ((iteration-opt.densify_from_iter) % opt.densification_interval >= opt.accumulate_fraction*(opt.densification_interval-1))): 
+                if (iteration <= opt.densify_from_iter 
+                    or (iteration > opt.densify_from_iter 
+                        and ((iteration-opt.densify_from_iter) % opt.densification_interval >= opt.accumulate_fraction*(opt.densification_interval-1)))): 
                     gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                     gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
@@ -257,7 +259,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                     # if iteration<1000:
                     #     print('\n[ITER {}] Densifying'.format(iteration))
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
-                    gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)
+                    gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, args.num_max)
                 
                 if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
                     gaussians.reset_opacity()
@@ -613,6 +615,7 @@ if __name__ == "__main__":
     parser.add_argument('--retest', action='store_true', default=False)
     parser.add_argument('--delete_pc', action='store_true', default=False)
     parser.add_argument("--save_compressed", action="store_true")
+    parser.add_argument("--num_max", type=int, default=None)
 
     parser.add_argument("--render_iteration", default=-1, type=int)
     parser.add_argument("--skip_train", action="store_true")

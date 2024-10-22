@@ -297,3 +297,9 @@ class CompressedLatents(object):
 #     weight.apply_(inverse_mapping.get)
 #     weight = weight.view(aux_info["num_latents"], aux_info["latent_dim"])
 #     return weight
+
+def get_top_k_indices(tensor, k):
+    if k > tensor.shape[-1]:
+        return torch.arange(tensor.shape[-1], device=tensor.device)
+    v, i = torch.topk(tensor, k, largest=True)
+    return i
