@@ -653,6 +653,8 @@ class GaussianModelSQ(GaussianModel):
         self.densify_and_clone(grads, max_grad, extent, mask_top=mask_top)
         self.densify_and_split(grads, max_grad, extent, mask_top=mask_top)
 
+        assert self.get_xyz.shape[0] <= num_max, f"Densification failed, number of points exceeds the maximum: {self.get_xyz.shape[0]} > {num_max}"
+
         prune_mask = (self.get_opacity < min_opacity).squeeze()
         if max_screen_size:
             big_points_vs = self.max_radii2D > max_screen_size
