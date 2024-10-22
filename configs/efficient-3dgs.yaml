@@ -1,6 +1,7 @@
 model_params:
   source_path: 'data/mip-nerf/bicycle'
   model_path: 'output/exp-bicycle'
+  n_start_gaussians: 100000
 
 quantize_params:
   features_rest_quant_type: 'sq'
