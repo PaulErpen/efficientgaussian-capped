@@ -105,8 +105,6 @@ class ModelParams(ParamGroup):
         self.save_images = False
         self.save_ply = False
 
-        self.n_start_gaussians = 10_000
-
         self.use_wandb = False
         self.wandb_project = "wandb-project"
         self.wandb_entity = "entity"
