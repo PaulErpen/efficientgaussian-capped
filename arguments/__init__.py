@@ -113,6 +113,8 @@ class ModelParams(ParamGroup):
         self.wandb_log_images = False
         self.wandb_tags = ""
 
+        self.n_start_gaussians = 100_000
+
         self.testing_interval = 100
         self.checkpoint_interval = 0
         super().__init__(parser, config, "Loading Parameters", sentinel)
