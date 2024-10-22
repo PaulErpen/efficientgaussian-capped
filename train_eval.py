@@ -10,19 +10,12 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
-print("starting imports")
-
 import os
-print("loaded os")
 import json
-print("loaded json")
 import yaml
-print("loaded yaml")
 import torch
-print("loaded torch")
 import shutil
 import torchvision
-print("loaded torchvision")
 import numpy as np
 import subprocess as sp
 from os import makedirs
@@ -30,7 +23,6 @@ from random import Random
 from PIL import Image
 from utils.loss_utils import l1_loss, ssim, scaled_l1_loss
 from gaussian_renderer import render, network_gui
-print("loaded gaussian_renderer")
 from lpipsPyTorch import lpips
 import torch.utils.benchmark as benchmark
 from collections import defaultdict
@@ -51,19 +43,9 @@ from utils.image_utils import psnr, resize_image, downsample_image, blur_image
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeParams
 
-print("Loaded imports")
 
-try:
-    from torch.utils.tensorboard import SummaryWriter
-    TENSORBOARD_FOUND = True
-except ImportError:
-    TENSORBOARD_FOUND = False
-
-try:
-    import wandb
-    WANDB_FOUND = True
-except ImportError:
-    WANDB_FOUND = False
+TENSORBOARD_FOUND = False
+WANDB_FOUND = False
 
 print("Loaded logging")
 
