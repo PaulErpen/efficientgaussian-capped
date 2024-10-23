@@ -653,7 +653,9 @@ class GaussianModelSQ(GaussianModel):
             mask_top = None
 
         self.densify_and_clone(grads, max_grad, extent, mask_top=mask_top)
+        print(f"Number of points after clone: {self.get_xyz.shape[0]}")
         self.densify_and_split(grads, max_grad, extent, mask_top=mask_top)
+        print(f"Number of points after split: {self.get_xyz.shape[0]}")
 
         assert self.get_xyz.shape[0] <= num_max, f"Densification failed, number of points exceeds the maximum: {self.get_xyz.shape[0]} > {num_max}"
 
