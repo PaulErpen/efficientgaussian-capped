@@ -644,7 +644,8 @@ class GaussianModelSQ(GaussianModel):
         grads[grads.isnan()] = 0.0
 
         if num_max is not None:
-            top_grads_index = get_top_k_indices(torch.norm(grads, dim=-1), num_max)
+            diff = num_max - self.get_xyz.shape[0]
+            top_grads_index = get_top_k_indices(torch.norm(grads, dim=-1), diff)
             mask_top = torch.zeros_like(torch.norm(grads, dim=-1), dtype=torch.bool)
             mask_top[top_grads_index] = True
         else:
