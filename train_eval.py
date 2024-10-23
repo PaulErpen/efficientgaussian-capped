@@ -320,7 +320,7 @@ def prepare_output_and_logger(args, all_args):
         id = hashlib.md5(wandb_run_name.encode('utf-8')).hexdigest()
         # name = os.path.basename(args.model_path) if wandb_run_name is None else wandb_run_name
         name = os.path.basename(args.source_path)+'_'+str(id)
-        wandb.login(key=args.wandb_key)
+        wandb.login(key=all_args.wandb_key)
         wandb.init(
             project=wandb_project,
             name=name,
