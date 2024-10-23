@@ -47,8 +47,6 @@ from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeP
 TENSORBOARD_FOUND = False
 WANDB_FOUND = False
 
-print("Loaded logging")
-
 def get_gpu_memory():
     command = "nvidia-smi --query-gpu=memory.used --format=csv"
     memory_used_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
