@@ -98,7 +98,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
         
     viewpoint_stack = None
     ema_loss_for_log = 0.0
-    progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
+    progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress", leave=True)
     first_iter += 1
     cur_size, cur_psnr = 0, 0
     cam_mean_distances = mean_distances(scene.getTrainCameras(), generator)
