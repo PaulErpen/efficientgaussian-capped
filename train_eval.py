@@ -321,7 +321,7 @@ def prepare_output_and_logger(args, all_args):
         # name = os.path.basename(args.model_path) if wandb_run_name is None else wandb_run_name
         name = os.path.basename(args.source_path)+'_'+str(id)
         wandb.login(key=all_args.wandb_key)
-        wandb.init(
+        wandb_run = wandb.init(
             project=wandb_project,
             name=name,
             config=all_args,
@@ -331,7 +331,7 @@ def prepare_output_and_logger(args, all_args):
             id=id,
             resume=True
         )
-    return tb_writer
+    return tb_writer, wandb_run
 
 def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, loss, l1_loss, size, 
                     iter_time, elapsed, testing_interval, search_best, scene : Scene, renderFunc, renderArgs):
@@ -636,7 +636,7 @@ if __name__ == "__main__":
         args.start_checkpoint = os.path.join(args.model_path, "resume_ckpt.pth")
 
     wandb_enabled=(WANDB_FOUND and lp_args.use_wandb)
-    tb_writer = prepare_output_and_logger(lp_args, args)
+    tb_writer, wandb_run = prepare_output_and_logger(lp_args, args)
     # Start GUI server, configure and run training
     # network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
