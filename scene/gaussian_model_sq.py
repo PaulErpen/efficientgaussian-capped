@@ -648,6 +648,7 @@ class GaussianModelSQ(GaussianModel):
             top_grads_index = get_top_k_indices(torch.norm(grads, dim=-1), diff)
             mask_top = torch.zeros_like(torch.norm(grads, dim=-1), dtype=torch.bool)
             mask_top[top_grads_index] = True
+            assert mask_top.sum() + self.get_xyz.shape[0] <= num_max, f"Error when creating mask: {mask_top.sum()} + {self.get_xyz.shape[0]} > {num_max}"
         else:
             mask_top = None
 
