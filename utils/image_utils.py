@@ -27,7 +27,9 @@ def ssim_metric(img1, img2):
     return ssim(img1, img2, data_range=1.0)
 
 def lpips_metric(img1, img2):
-    return lpips.LPIPS(net='alex')(img1, img2)
+    l = lpips.LPIPS(net='alex')
+    l.to("cuda")
+    return l(img1, img2)
 
 def downsample_image(original_image, scale=1.0):
 
