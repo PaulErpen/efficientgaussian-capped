@@ -377,11 +377,11 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
 
                         if wandb_enabled and wandb_log_images:
                             if iteration == testing_interval:
-                                gt_log_image = torch.transpose(gt_image, 1, 2)
+                                gt_log_image = gt_image
                                 wandb.log({config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name): 
                                            wandb.Image(gt_log_image.detach().cpu().numpy(), caption="ground_truth")}, 
                                            step=iteration)
-                            log_image = torch.transpose(image, 1, 2)
+                            log_image = image
                             wandb.log({config['name'] + "_view_{}/render".format(viewpoint.image_name): 
                                        wandb.Image(log_image.detach().cpu().numpy(), caption="render")}, 
                                        step=iteration)
