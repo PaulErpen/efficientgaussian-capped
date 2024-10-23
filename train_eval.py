@@ -377,11 +377,13 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
 
                         if wandb_enabled and wandb_log_images:
                             if iteration == testing_interval:
+                                gt_log_image = torch.transpose(gt_image[None], 0, 2)
                                 wandb.log({config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name): 
-                                           wandb.Image(gt_image[None].detach().cpu().numpy(), caption="ground_truth")}, 
-                                           step=iteration),
+                                           wandb.Image(gt_log_image.detach().cpu().numpy(), caption="ground_truth")}, 
+                                           step=iteration)
+                            log_image = torch.transpose(image[None], 0, 2)
                             wandb.log({config['name'] + "_view_{}/render".format(viewpoint.image_name): 
-                                       wandb.Image(image[None].detach().cpu().numpy(), caption="render")}, 
+                                       wandb.Image(log_image.detach().cpu().numpy(), caption="render")}, 
                                        step=iteration)
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
