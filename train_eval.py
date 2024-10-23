@@ -316,15 +316,14 @@ def prepare_output_and_logger(args, all_args):
     if WANDB_FOUND and args.use_wandb:
         wandb_project = args.wandb_project
         wandb_run_name = args.wandb_run_name
-        wandb_entity = args.wandb_entity
         wandb_mode = args.wandb_mode
         id = hashlib.md5(wandb_run_name.encode('utf-8')).hexdigest()
         # name = os.path.basename(args.model_path) if wandb_run_name is None else wandb_run_name
         name = os.path.basename(args.source_path)+'_'+str(id)
+        wandb.login(key=args.wandb_key)
         wandb.init(
             project=wandb_project,
             name=name,
-            entity=wandb_entity,
             config=all_args,
             sync_tensorboard=False,
             dir=args.model_path,
@@ -618,6 +617,7 @@ if __name__ == "__main__":
     parser.add_argument("--render_iteration", default=-1, type=int)
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_test", action="store_true")
+    parser.add_argument("--wandb_key", type=str, default="")
     args = parser.parse_args(sys.argv[1:])
     
     # args.save_iterations.append(args.iterations)
