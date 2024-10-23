@@ -13,6 +13,8 @@ import torch
 import numpy as np
 import torchvision
 import torch.nn as nn
+from torchmetrics.functional import structural_similarity_index_measure as ssim
+import lpips
 
 def mse(img1, img2):
     return (((img1 - img2)) ** 2).view(img1.shape[0], -1).mean(1, keepdim=True)
@@ -21,6 +23,11 @@ def psnr(img1, img2):
     mse = (((img1 - img2)) ** 2).view(img1.shape[0], -1).mean(1, keepdim=True)
     return 20 * torch.log10(1.0 / torch.sqrt(mse))
 
+def ssim_metric(img1, img2):
+    return ssim(img1, img2, data_range=1.0)
+
+def lpips_metric(img1, img2):
+    return lpips.LPIPS(net='alex')(img1, img2)
 
 def downsample_image(original_image, scale=1.0):
 

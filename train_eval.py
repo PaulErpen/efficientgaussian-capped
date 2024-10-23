@@ -39,13 +39,17 @@ import hashlib
 from collections import OrderedDict
 from tqdm import tqdm
 from utils.general_utils import DecayScheduler
-from utils.image_utils import psnr, resize_image, downsample_image, blur_image
+from utils.image_utils import lpips_metric, psnr, resize_image, downsample_image, blur_image, ssim_metric
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeParams
 
+try:
+    import wandb
+    WANDB_FOUND = True
+except ImportError:
+    WANDB_FOUND = False
 
 TENSORBOARD_FOUND = False
-WANDB_FOUND = False
 
 def get_gpu_memory():
     command = "nvidia-smi --query-gpu=memory.used --format=csv"
@@ -359,14 +363,18 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
             if config['cameras'] and len(config['cameras']) > 0:
                 l1_test = 0.0
                 psnr_test = 0.0
+                ssim_test = 0.0
+                lpips_test = 0.0
                 for idx, viewpoint in enumerate(config['cameras']):
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, *renderArgs)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
                     _, viewpoint.image_height, viewpoint.image_width = gt_image.shape
-                    if tb_writer and (idx < 5):
-                        tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
-                        if iteration == testing_interval:
-                            tb_writer.add_images(config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name), gt_image[None], global_step=iteration)
+                    
+                    if (idx < 5):
+                        if tb_writer:
+                            tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
+                            if iteration == testing_interval:
+                                tb_writer.add_images(config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name), gt_image[None], global_step=iteration)
 
                         if wandb_enabled and wandb_log_images:
                             if iteration == testing_interval:
@@ -378,16 +386,25 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                                        step=iteration)
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
+                    ssim_test += ssim_metric(image, gt_image).mean().double()
+                    lpips_test += lpips_metric(image, gt_image).mean().double()
                 psnr_test /= len(config['cameras'])
-                l1_test /= len(config['cameras'])          
-                # print("\n[ITER {}] Evaluating {}: L1 {} PSNR {}".format(iteration, config['name'], l1_test, psnr_test))
+                l1_test /= len(config['cameras'])
+                ssim_test /= len(config['cameras'])
+                lpips_test /= len(config['cameras'])
+                print("\n[ITER {}] Evaluating {}: L1 {} PSNR {}".format(iteration, config['name'], l1_test, psnr_test))
                 psnr_configs[config['name']] = psnr_test
                 if tb_writer:
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', l1_test, iteration)
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
 
                 if wandb_enabled:
-                    wandb.log({config['name'] + '/loss_viewpoint/l1_loss': l1_test, config['name'] + '/loss_viewpoint/psnr': psnr_test}, step=iteration)
+                    wandb.log({
+                        config['name'] + '/loss_viewpoint/l1_loss': l1_test, 
+                        config['name'] + '/loss_viewpoint/psnr': psnr_test,
+                        config['name'] + '/loss_viewpoint/ssim': ssim_test,
+                        config['name'] + '/loss_viewpoint/lpips': lpips_test,
+                    }, step=iteration)
 
         if tb_writer:
             tb_writer.add_histogram("scene/opacity_histogram", scene.gaussians.get_opacity, iteration)
