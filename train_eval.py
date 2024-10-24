@@ -581,100 +581,103 @@ def evaluate(images, scene_dir, iteration, wandb_enabled=False):
     return full_dict
 
 if __name__ == "__main__":
-    print("Entering main")
-
-    # Config file is used for argument defaults. Command line arguments override config file.
-    config_path = sys.argv[sys.argv.index("--config")+1] if "--config" in sys.argv else None
-    if config_path:
-        with open(config_path) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
-    else:
-        config = {}
-    config = defaultdict(lambda: {}, config)
-
-    parser = ArgumentParser(description="Training script parameters")
-    lp = ModelParams(parser, config['model_params'])
-    op = OptimizationParams(parser, config['opt_params'])
-    pp = PipelineParams(parser, config['pipe_params'])
-    qp = QuantizeParams(parser, config['quantize_params'])
-
-    parser.add_argument('--config', type=str, default=None)
-    parser.add_argument('--ip', type=str, default="127.0.0.1")
-    parser.add_argument('--port', type=int, default=6009)
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--debug_from', type=int, default=-1)
-    parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[])
-    parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
-    parser.add_argument("--start_checkpoint", type=str, default = None)
-    parser.add_argument('--resume', action='store_true', default=False)
-    parser.add_argument('--retrain', action='store_true', default=False)
-    parser.add_argument('--retest', action='store_true', default=False)
-    parser.add_argument('--delete_pc', action='store_true', default=False)
-    parser.add_argument("--save_compressed", action="store_true")
-    parser.add_argument("--num_max", type=int, default=None)
-    parser.add_argument("--n_start_gaussians", type=int, default=None)
-
-    parser.add_argument("--render_iteration", default=-1, type=int)
-    parser.add_argument("--skip_train", action="store_true")
-    parser.add_argument("--skip_test", action="store_true")
-    parser.add_argument("--wandb_key", type=str, default="")
-    args = parser.parse_args(sys.argv[1:])
-    
-    # args.save_iterations.append(args.iterations)
-    
-    lp_args = lp.extract(args)
-    op_args = op.extract(args)
-    pp_args = pp.extract(args)
-    qp_args = qp.extract(args)
-    print('Running on ', socket.gethostname())
-    print("Optimizing " + args.source_path)
-
-    # Initialize system state (RNG)
-    safe_state(args.quiet)
-
-    if args.resume:
-        args.start_checkpoint = os.path.join(args.model_path, "resume_ckpt.pth")
-
-    wandb_enabled=(WANDB_FOUND and lp_args.use_wandb)
-    tb_writer, wandb_run = prepare_output_and_logger(lp_args, args)
-    # Start GUI server, configure and run training
-    # network_gui.init(args.ip, args.port)
-    torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    best_iter = -1
-    if wandb_enabled:
-        wandb.run.summary['GPU'] = torch.cuda.get_device_name(0).split()[-1]
-    if not args.skip_train:
-        if os.path.exists(os.path.join(args.model_path,"results_training.json")) and not args.retrain:
-            print("Training complete at {}".format(args.model_path))
+    try:
+        # Config file is used for argument defaults. Command line arguments override config file.
+        config_path = sys.argv[sys.argv.index("--config")+1] if "--config" in sys.argv else None
+        if config_path:
+            with open(config_path) as f:
+                config = yaml.load(f, Loader=yaml.FullLoader)
         else:
-            training_time, best_iter = training(args.seed, lp_args, op_args, pp_args, qp_args, 
-                                                args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from, args, tb_writer, args)
-            full_dict = {args.model_path: {}}
-            full_dict[args.model_path].update({"Training time": training_time})
-            with open(os.path.join(args.model_path,"results_training.json"), 'w') as fp:
-                json.dump(full_dict[args.model_path], fp, indent=True)
+            config = {}
+        config = defaultdict(lambda: {}, config)
 
-    if not args.skip_test:
-        if os.path.exists(os.path.join(args.model_path,"results.json")) and not args.retest:
-            print("Testing complete at {}".format(args.model_path))
-        else:
-            images, fps, loaded_iter = render_sets(lp_args, best_iter, pp_args, qp_args, 
-                                    args.skip_train, args.skip_test, wandb_enabled, op_args.use_amp)
-            if wandb_enabled:
-                wandb.log({"rendering_mem": get_gpu_memory()[0]}, step=3)
-            full_dict = evaluate(images, args.model_path, loaded_iter, wandb_enabled)
-            if wandb_enabled:
-                wandb.log({"rendering_mem": get_gpu_memory()[0]}, step=4)
-            full_dict[args.model_path].update({"FPS": fps})
-            with open(os.path.join(args.model_path,"results.json"), 'w') as fp:
-                json.dump(full_dict[args.model_path], fp, indent=True)
-    # open(os.path.join(args.model_path, "complete"), "a").close()
-    if os.path.exists(os.path.join(args.model_path, "point_cloud")) and args.delete_pc:
-        shutil.rmtree(os.path.join(args.model_path, "point_cloud"))
-    if os.path.exists(os.path.join(args.model_path, "point_cloud_best")) and args.delete_pc:
-        shutil.rmtree(os.path.join(args.model_path, "point_cloud_best"))
+        parser = ArgumentParser(description="Training script parameters")
+        lp = ModelParams(parser, config['model_params'])
+        op = OptimizationParams(parser, config['opt_params'])
+        pp = PipelineParams(parser, config['pipe_params'])
+        qp = QuantizeParams(parser, config['quantize_params'])
 
-    # All done
-    print("\nTraining complete.")
+        parser.add_argument('--config', type=str, default=None)
+        parser.add_argument('--ip', type=str, default="127.0.0.1")
+        parser.add_argument('--port', type=int, default=6009)
+        parser.add_argument('--seed', type=int, default=0)
+        parser.add_argument('--debug_from', type=int, default=-1)
+        parser.add_argument('--detect_anomaly', action='store_true', default=False)
+        parser.add_argument("--save_iterations", nargs="+", type=int, default=[])
+        parser.add_argument("--quiet", action="store_true")
+        parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
+        parser.add_argument("--start_checkpoint", type=str, default = None)
+        parser.add_argument('--resume', action='store_true', default=False)
+        parser.add_argument('--retrain', action='store_true', default=False)
+        parser.add_argument('--retest', action='store_true', default=False)
+        parser.add_argument('--delete_pc', action='store_true', default=False)
+        parser.add_argument("--save_compressed", action="store_true")
+        parser.add_argument("--num_max", type=int, default=None)
+        parser.add_argument("--n_start_gaussians", type=int, default=None)
+
+        parser.add_argument("--render_iteration", default=-1, type=int)
+        parser.add_argument("--skip_train", action="store_true")
+        parser.add_argument("--skip_test", action="store_true")
+        parser.add_argument("--wandb_key", type=str, default="")
+        args = parser.parse_args(sys.argv[1:])
+        
+        # args.save_iterations.append(args.iterations)
+        
+        lp_args = lp.extract(args)
+        op_args = op.extract(args)
+        pp_args = pp.extract(args)
+        qp_args = qp.extract(args)
+        print('Running on ', socket.gethostname())
+        print("Optimizing " + args.source_path)
+
+        # Initialize system state (RNG)
+        safe_state(args.quiet)
+
+        if args.resume:
+            args.start_checkpoint = os.path.join(args.model_path, "resume_ckpt.pth")
+
+        wandb_enabled=(WANDB_FOUND and lp_args.use_wandb)
+        tb_writer, wandb_run = prepare_output_and_logger(lp_args, args)
+        # Start GUI server, configure and run training
+        # network_gui.init(args.ip, args.port)
+        torch.autograd.set_detect_anomaly(args.detect_anomaly)
+        best_iter = -1
+        if wandb_enabled:
+            wandb.run.summary['GPU'] = torch.cuda.get_device_name(0).split()[-1]
+        if not args.skip_train:
+            if os.path.exists(os.path.join(args.model_path,"results_training.json")) and not args.retrain:
+                print("Training complete at {}".format(args.model_path))
+            else:
+                training_time, best_iter = training(args.seed, lp_args, op_args, pp_args, qp_args, 
+                                                    args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from, args, tb_writer, args)
+                full_dict = {args.model_path: {}}
+                full_dict[args.model_path].update({"Training time": training_time})
+                with open(os.path.join(args.model_path,"results_training.json"), 'w') as fp:
+                    json.dump(full_dict[args.model_path], fp, indent=True)
+
+        if not args.skip_test:
+            if os.path.exists(os.path.join(args.model_path,"results.json")) and not args.retest:
+                print("Testing complete at {}".format(args.model_path))
+            else:
+                images, fps, loaded_iter = render_sets(lp_args, best_iter, pp_args, qp_args, 
+                                        args.skip_train, args.skip_test, wandb_enabled, op_args.use_amp)
+                if wandb_enabled:
+                    wandb.log({"rendering_mem": get_gpu_memory()[0]}, step=3)
+                full_dict = evaluate(images, args.model_path, loaded_iter, wandb_enabled)
+                if wandb_enabled:
+                    wandb.log({"rendering_mem": get_gpu_memory()[0]}, step=4)
+                full_dict[args.model_path].update({"FPS": fps})
+                with open(os.path.join(args.model_path,"results.json"), 'w') as fp:
+                    json.dump(full_dict[args.model_path], fp, indent=True)
+        # open(os.path.join(args.model_path, "complete"), "a").close()
+        if os.path.exists(os.path.join(args.model_path, "point_cloud")) and args.delete_pc:
+            shutil.rmtree(os.path.join(args.model_path, "point_cloud"))
+        if os.path.exists(os.path.join(args.model_path, "point_cloud_best")) and args.delete_pc:
+            shutil.rmtree(os.path.join(args.model_path, "point_cloud_best"))
+
+        # All done
+        print("\nTraining complete.")
+    except Exception as e:
+        if wandb_run is not None:
+            wandb_run.finish()
+        raise e
