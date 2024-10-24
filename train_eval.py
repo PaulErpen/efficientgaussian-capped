@@ -15,7 +15,6 @@ import json
 import yaml
 import torch
 import shutil
-import torchvision
 import numpy as np
 import subprocess as sp
 from os import makedirs
@@ -26,7 +25,6 @@ from gaussian_renderer import render, network_gui
 from lpipsPyTorch import lpips
 import torch.utils.benchmark as benchmark
 from collections import defaultdict
-import torchvision.transforms.functional as tf
 from pathlib import Path
 import sys
 import socket
@@ -439,8 +437,9 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             rendering = render(view, gaussians, pipeline, background)["render"]
         gt = view.original_image[0:3, :, :]
         if save_images:
-            torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-            torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+            # torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+            # torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+            print("Not saving images, torchvision is broken")
         else:
             preds.append(rendering)
             gts.append(gt)
@@ -516,8 +515,9 @@ def readImages(renders_dir, gt_dir):
     for fname in os.listdir(renders_dir):
         render = Image.open(renders_dir / fname)
         gt = Image.open(gt_dir / fname)
-        renders.append(tf.to_tensor(render)[:3, :, :].cuda())
-        gts.append(tf.to_tensor(gt)[:3, :, :].cuda())
+        # renders.append(tf.to_tensor(render)[:3, :, :].cuda())
+        # gts.append(tf.to_tensor(gt)[:3, :, :].cuda())
+        raise NotImplementedError("torchvision is broken")
         image_names.append(fname)
     return renders, gts, image_names
 

@@ -13,7 +13,6 @@ import os
 import json
 import torch
 import shutil
-import torchvision
 import numpy as np
 import subprocess as sp
 from os import makedirs
@@ -23,7 +22,6 @@ from utils.loss_utils import l1_loss, ssim, scaled_l1_loss
 from gaussian_renderer import render, network_gui
 from lpipsPyTorch import lpips
 import torch.utils.benchmark as benchmark
-import torchvision.transforms.functional as tf
 from pathlib import Path
 import sys
 import socket
@@ -114,7 +112,8 @@ def render_set(model_path, iteration, views, gaussians, pipeline, background, sa
         with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=use_amp):
             rendering = render(view, gaussians, pipeline, background)["render"]
         if save_images:
-            torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+            print("Not saving image, torchvision is broken")
+            # torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
         else:
             preds.append(rendering)
             names.append('{0:05d}'.format(idx))

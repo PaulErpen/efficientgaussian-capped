@@ -11,7 +11,6 @@
 
 import torch
 import numpy as np
-import torchvision
 import torch.nn as nn
 from torchmetrics.functional import structural_similarity_index_measure as ssim
 import lpips
@@ -50,19 +49,20 @@ def resize_image(original_image, scale=1.0):
         return nn.functional.interpolate(resized.unsqueeze(0), size=(image_height, image_width), mode='bilinear', align_corners=False).squeeze(0)
 
 def blur_image(scale, transform):
+    raise NotImplementedError
 
-    assert scale<=1.0, "Scale must be <= 1.0"
-    if scale == 1.0:
-        return torch.nn.Identity()
-    else:
-        kernel_radius=int(transform.split("_")[1])
-        cur_radius = round(kernel_radius*(1-scale))
-        kernel_size=2*cur_radius+1
-        sigma=float(transform.split("_")[2])
-        if sigma == 0:
-            cur_sigma = 0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8
-        else:
-            cur_sigma = sigma*(1-scale)
-        transform = torchvision.transforms.GaussianBlur((kernel_size,kernel_size), sigma=cur_sigma).cuda()
-        return transform
+    # assert scale<=1.0, "Scale must be <= 1.0"
+    # if scale == 1.0:
+    #     return torch.nn.Identity()
+    # else:
+    #     kernel_radius=int(transform.split("_")[1])
+    #     cur_radius = round(kernel_radius*(1-scale))
+    #     kernel_size=2*cur_radius+1
+    #     sigma=float(transform.split("_")[2])
+    #     if sigma == 0:
+    #         cur_sigma = 0.3 * ((kernel_size - 1) * 0.5 - 1) + 0.8
+    #     else:
+    #         cur_sigma = sigma*(1-scale)
+    #     transform = torchvision.transforms.GaussianBlur((kernel_size,kernel_size), sigma=cur_sigma).cuda()
+    #     return transform
     

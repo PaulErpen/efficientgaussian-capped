@@ -15,7 +15,6 @@ import os
 from tqdm import tqdm
 from os import makedirs
 from gaussian_renderer import render
-import torchvision
 from utils.general_utils import safe_state
 from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, QuantizeParams,get_combined_args
@@ -31,8 +30,9 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         rendering = render(view, gaussians, pipeline, background)["render"]
         gt = view.original_image[0:3, :, :]
-        torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        # torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+        # torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        print("Not saving images, torchvision is broken")
 
 def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, quantize: QuantizeParams, 
                 skip_train : bool, skip_test : bool):
