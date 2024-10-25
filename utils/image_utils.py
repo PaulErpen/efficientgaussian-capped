@@ -12,7 +12,6 @@
 import torch
 import numpy as np
 import torch.nn as nn
-import lpips
 
 def mse(img1, img2):
     return (((img1 - img2)) ** 2).view(img1.shape[0], -1).mean(1, keepdim=True)
@@ -20,11 +19,6 @@ def mse(img1, img2):
 def psnr(img1, img2):
     mse = (((img1 - img2)) ** 2).view(img1.shape[0], -1).mean(1, keepdim=True)
     return 20 * torch.log10(1.0 / torch.sqrt(mse))
-
-def lpips_metric(img1, img2):
-    l = lpips.LPIPS(net='alex')
-    l.to("cuda")
-    return l(img1, img2)
 
 def downsample_image(original_image, scale=1.0):
 
