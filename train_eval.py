@@ -22,7 +22,6 @@ from random import Random
 from PIL import Image
 from utils.loss_utils import l1_loss, ssim, scaled_l1_loss
 from gaussian_renderer import render, network_gui
-from lpipsPyTorch import lpips
 import torch.utils.benchmark as benchmark
 from collections import defaultdict
 from pathlib import Path
@@ -361,7 +360,6 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                 l1_test = 0.0
                 psnr_test = 0.0
                 ssim_test = 0.0
-                lpips_test = 0.0
                 for idx, viewpoint in enumerate(config['cameras']):
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, *renderArgs)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
@@ -385,12 +383,10 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                                        step=iteration)
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
-                    lpips_test += lpips(image, gt_image, net_type="vgg").mean().double()
                     ssim_test += ssim(image, gt_image).mean().double()
                 psnr_test /= len(config['cameras'])
                 l1_test /= len(config['cameras'])
                 ssim_test /= len(config['cameras'])
-                lpips_test /= len(config['cameras'])
                 print("\n[ITER {}] Evaluating {}: L1 {} PSNR {}".format(iteration, config['name'], l1_test, psnr_test))
                 psnr_configs[config['name']] = psnr_test
                 if tb_writer:
@@ -402,7 +398,6 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                         config['name'] + '/loss_viewpoint/l1_loss': l1_test, 
                         config['name'] + '/loss_viewpoint/psnr': psnr_test,
                         config['name'] + '/loss_viewpoint/ssim': ssim_test,
-                        config['name'] + '/loss_viewpoint/lpips': lpips_test,
                     }, step=iteration)
 
         if tb_writer:
@@ -547,30 +542,24 @@ def evaluate(images, scene_dir, iteration, wandb_enabled=False):
 
         ssims = []
         psnrs = []
-        lpipss = []
 
         for idx in tqdm(range(len(renders)), desc="Metric evaluation progress"):
             render, gt = renders[idx].unsqueeze(0)[:, :3, :, :].cuda(), gts[idx].unsqueeze(0)[:, :3, :, :].cuda()
             ssims.append(ssim(render, gt))
             psnrs.append(psnr(render, gt))
-            lpipss.append(lpips(render, gt, net_type='vgg'))
 
         print("  SSIM : {:>12.7f}".format(torch.tensor(ssims).mean(), ".5"))
         print("  PSNR : {:>12.7f}".format(torch.tensor(psnrs).mean(), ".5"))
-        print("  LPIPS: {:>12.7f}".format(torch.tensor(lpipss).mean(), ".5"))
         print("")
 
         full_dict[scene_dir].update({"SSIM": torch.tensor(ssims).mean().item(),
-                                                "PSNR": torch.tensor(psnrs).mean().item(),
-                                                "LPIPS": torch.tensor(lpipss).mean().item()})
+                                                "PSNR": torch.tensor(psnrs).mean().item()})
         per_view_dict[scene_dir].update({"SSIM": {name: ssim for ssim, name in zip(torch.tensor(ssims).tolist(), image_names)},
-                                                    "PSNR": {name: psnr for psnr, name in zip(torch.tensor(psnrs).tolist(), image_names)},
-                                                    "LPIPS": {name: lp for lp, name in zip(torch.tensor(lpipss).tolist(), image_names)}})
+                                                    "PSNR": {name: psnr for psnr, name in zip(torch.tensor(psnrs).tolist(), image_names)}})
 
         if wandb_enabled:
             wandb.run.summary['PSNR'] = torch.tensor(psnrs).mean()
             wandb.run.summary['SSIM'] = torch.tensor(ssims).mean()
-            wandb.run.summary['LPIPS'] = torch.tensor(lpipss).mean()
 
         with open(scene_dir + "/per_view.json", 'w') as fp:
             json.dump(per_view_dict[scene_dir], fp, indent=True)
