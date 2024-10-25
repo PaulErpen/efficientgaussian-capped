@@ -4,7 +4,7 @@ import scipy
 import numpy as np
 import torch.nn as nn
 from torch import Tensor
-from fast_pytorch_kmeans import KMeans
+# from fast_pytorch_kmeans import KMeans
 from torch.nn import Module, Parameter, init
 from typing import Optional, List, Tuple, Union
 from torch.nn.modules.utils import _single, _pair, _triple, _reverse_repeat_tuple, _ntuple
@@ -311,9 +311,10 @@ class CodebookQuantize(torch.nn.Module):
 
     def init(self, output: Tensor):
         with torch.no_grad():
-            kmeans = KMeans(n_clusters=self.codebook_size, mode='euclidean', init_method='++', max_iter=500)
-            kmeans.fit_predict(output)
-            self.codebook.data = kmeans.centroids.to(self.codebook)
+            raise NotImplementedError("Codebook initialization not implemented yet!")
+            # kmeans = KMeans(n_clusters=self.codebook_size, mode='euclidean', init_method='++', max_iter=500)
+            # kmeans.fit_predict(output)
+            # self.codebook.data = kmeans.centroids.to(self.codebook)
 
     def forward(self, weights):
         if not self.use_gumbel:

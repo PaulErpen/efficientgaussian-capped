@@ -17,4 +17,3 @@ dependencies:
     - wandb
     - Ninja
     - scipy
-    - fast_pytorch_kmeans
