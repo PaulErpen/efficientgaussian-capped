@@ -16,6 +16,5 @@ dependencies:
     - submodules/simple-knn
     - wandb
     - Ninja
-    - torchac
     - scipy
     - fast_pytorch_kmeans

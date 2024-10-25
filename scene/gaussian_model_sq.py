@@ -11,7 +11,7 @@
 
 import torch
 import numpy as np
-from utils.general_utils import get_top_k_indices, inverse_sigmoid, get_expon_lr_func, build_rotation, HardConcrete, CompressedLatents
+from utils.general_utils import get_top_k_indices, inverse_sigmoid, get_expon_lr_func, build_rotation, HardConcrete
 from torch import nn
 import os
 import pickle
@@ -289,24 +289,25 @@ class GaussianModelSQ(GaussianModel):
                             size_bits = torch.sum(information_bits*counts).item()
                             latents_size += size_bits
                         else:
-                            import torchac
-                            cdf = torch.cumsum(probs,dim=0)
-                            cdf = torch.cat((torch.Tensor([0.0]).to(cdf),cdf))
-                            cdf = cdf.unsqueeze(0).repeat(self.codebook.size(0),1)
-                            cdf = cdf/cdf[:,-1:]
-                            
-                            weight = weight - weight.min()
-                            unique_vals, counts = torch.unique(weight, return_counts = True)
-                            mapping = torch.zeros((weight.max().item()+1))
-                            mapping[unique_vals] = torch.arange(unique_vals.size(0)).to(mapping)
-                            weight = mapping[weight]
-                            cdf = torch.cumsum(counts/counts.sum(),dim=0)
-                            cdf = torch.cat((torch.Tensor([0.0]).to(cdf),cdf))
-                            cdf = cdf.unsqueeze(0).repeat(weight.size(0),1)
-                            cdf = cdf/cdf[:,-1:] # Normalize the final cdf value just to keep torchac happy
-                            byte_stream = torchac.encode_float_cdf(cdf.detach().cpu(), weight.detach().cpu().to(torch.int16), \
-                                                                    check_input_bounds=True)
-                            latents_size += len(byte_stream)*8
+                            raise NotImplementedError("Torchac not supported!")
+                            # import torchac
+                            # cdf = torch.cumsum(probs,dim=0)
+                            # cdf = torch.cat((torch.Tensor([0.0]).to(cdf),cdf))
+                            # cdf = cdf.unsqueeze(0).repeat(self.codebook.size(0),1)
+                            # cdf = cdf/cdf[:,-1:]
+                            # 
+                            # weight = weight - weight.min()
+                            # unique_vals, counts = torch.unique(weight, return_counts = True)
+                            # mapping = torch.zeros((weight.max().item()+1))
+                            # mapping[unique_vals] = torch.arange(unique_vals.size(0)).to(mapping)
+                            # weight = mapping[weight]
+                            # cdf = torch.cumsum(counts/counts.sum(),dim=0)
+                            # cdf = torch.cat((torch.Tensor([0.0]).to(cdf),cdf))
+                            # cdf = cdf.unsqueeze(0).repeat(weight.size(0),1)
+                            # cdf = cdf/cdf[:,-1:] # Normalize the final cdf value just to keep torchac happy
+                            # byte_stream = torchac.encode_float_cdf(cdf.detach().cpu(), weight.detach().cpu().to(torch.int16), \
+                            #                                         check_input_bounds=True)
+                            # latents_size += len(byte_stream)*8
 
         return ldec_size+latents_size
     
@@ -391,41 +392,41 @@ class GaussianModelSQ(GaussianModel):
         el = PlyElement.describe(elements, 'vertex')
         PlyData([el]).write(path)
             
-    def save_compressed_pkl(self, path, latent_args):
-        mkdir_p(os.path.dirname(path))
-
-        latents = OrderedDict()
-        decoder_state_dict = OrderedDict()
-        decoder_args = OrderedDict()
-        for i,attribute in enumerate(self.param_names):
-            if isinstance(self.latent_decoders[attribute], DecoderIdentity):
-                latents[attribute] = self._latents[attribute].detach().cpu()
-            else:
-                latent = self._latents[attribute].detach().cpu()
-                compressed_obj = CompressedLatents()
-                compressed_obj.compress(latent)
-                latents[attribute] = compressed_obj
-                decoder_args[attribute] = {
-                    'latent_dim': latent_args.latent_dim[i],
-                    'feature_dim': self.feature_dims[attribute],
-                    'ldecode_matrix': latent_args.ldecode_matrix[i],
-                    'norm': latent_args.latent_norm[i],
-                    'num_layers_dec': latent_args.num_layers_dec[i],
-                    'hidden_dim_dec': latent_args.hidden_dim_dec[i],
-                    'activation': latent_args.activation[i],
-                    'use_shift': latent_args.use_shift[i],
-                    'ldec_std': latent_args.ldec_std[i],
-                    'use_gumbel': latent_args.use_gumbel[i],
-                    'diff_sampling': latent_args.diff_sampling[i]
-                }
-                decoder_state_dict[attribute] = self.latent_decoders[attribute].state_dict().copy()
-
-        with open(path,'wb') as f:
-            pickle.dump({
-                         'latents': latents,
-                         'decoder_state_dict': decoder_state_dict,
-                         'decoder_args': decoder_args,
-            }, f)
+    #def save_compressed_pkl(self, path, latent_args):
+    #    mkdir_p(os.path.dirname(path))
+#
+    #    latents = OrderedDict()
+    #    decoder_state_dict = OrderedDict()
+    #    decoder_args = OrderedDict()
+    #    for i,attribute in enumerate(self.param_names):
+    #        if isinstance(self.latent_decoders[attribute], DecoderIdentity):
+    #            latents[attribute] = self._latents[attribute].detach().cpu()
+    #        else:
+    #            latent = self._latents[attribute].detach().cpu()
+    #            compressed_obj = CompressedLatents()
+    #            compressed_obj.compress(latent)
+    #            latents[attribute] = compressed_obj
+    #            decoder_args[attribute] = {
+    #                'latent_dim': latent_args.latent_dim[i],
+    #                'feature_dim': self.feature_dims[attribute],
+    #                'ldecode_matrix': latent_args.ldecode_matrix[i],
+    #                'norm': latent_args.latent_norm[i],
+    #                'num_layers_dec': latent_args.num_layers_dec[i],
+    #                'hidden_dim_dec': latent_args.hidden_dim_dec[i],
+    #                'activation': latent_args.activation[i],
+    #                'use_shift': latent_args.use_shift[i],
+    #                'ldec_std': latent_args.ldec_std[i],
+    #                'use_gumbel': latent_args.use_gumbel[i],
+    #                'diff_sampling': latent_args.diff_sampling[i]
+    #            }
+    #            decoder_state_dict[attribute] = self.latent_decoders[attribute].state_dict().copy()
+#
+    #    with open(path,'wb') as f:
+    #        pickle.dump({
+    #                     'latents': latents,
+    #                     'decoder_state_dict': decoder_state_dict,
+    #                     'decoder_args': decoder_args,
+    #        }, f)
 
     def load_compressed_pkl(self, path):
 

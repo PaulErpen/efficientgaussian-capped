@@ -216,52 +216,52 @@ class DecayScheduler(object):
             raise ValueError('Unknown decay name: {}'.format(self.decay_name))
         
 
-class CompressedLatents(object):
-    
-    def compress(self, latent):
-        import torchac
-        assert latent.dim() == 2, "Latent should be 2D"
-        self.num_latents, self.latent_dim = latent.shape
-        flattened = latent.flatten()
-
-        weight = torch.round(flattened).int()
-        unique_vals, counts = torch.unique(weight, return_counts = True)
-        probs = counts/torch.sum(counts)
-        tail_idx = torch.where(probs <= 1.0e-4)[0]
-        tail_vals = unique_vals[tail_idx]
-        self.tail_locs = {}
-        for val in tail_vals:
-            self.tail_locs[val.item()] = torch.where(weight == val)[0].detach().cpu()
-            weight[weight == val] = unique_vals[counts.argmax()]
-        unique_vals, counts = torch.unique(weight, return_counts = True)
-        probs = counts/torch.sum(counts)
-        weight = weight.detach().cpu()
-
-        cdf = torch.cumsum(probs,dim=0)
-        cdf = torch.cat((torch.Tensor([0.0]).to(cdf),cdf))
-        cdf = cdf/cdf[-1:] # Normalize the final cdf value just to keep torchac happy
-        cdf = cdf.unsqueeze(0).repeat(flattened.size(0),1)
-        
-        mapping = {val.item():idx.item() for val,idx in zip(unique_vals,torch.arange(unique_vals.shape[0]))}
-        self.mapping = mapping
-        weight.apply_(mapping.get)
-        byte_stream = torchac.encode_float_cdf(cdf.detach().cpu(), weight.to(torch.int16))
-        
-        self.byte_stream, self.mapping, self.cdf = byte_stream, mapping, cdf[0].detach().cpu().numpy()
-
-    def uncompress(self):
-        import torchac
-        cdf = torch.tensor(self.cdf).unsqueeze(0).repeat(self.num_latents*self.latent_dim,1)
-        weight = torchac.decode_float_cdf(cdf, self.byte_stream)
-        weight = weight.to(torch.float32)
-        # weight = self.tail_decode(cdf, self.byte_stream, self.tail_vals, self.tail_idx)
-        # weight = weight.to(torch.float32)
-        inverse_mapping = {v:k for k,v in self.mapping.items()}
-        weight.apply_(inverse_mapping.get)
-        for val, locs in self.tail_locs.items():
-            weight[locs] = val
-        weight = weight.view(self.num_latents, self.latent_dim)
-        return weight
+# class CompressedLatents(object):
+#     
+#     def compress(self, latent):
+#         import torchac
+#         assert latent.dim() == 2, "Latent should be 2D"
+#         self.num_latents, self.latent_dim = latent.shape
+#         flattened = latent.flatten()
+# 
+#         weight = torch.round(flattened).int()
+#         unique_vals, counts = torch.unique(weight, return_counts = True)
+#         probs = counts/torch.sum(counts)
+#         tail_idx = torch.where(probs <= 1.0e-4)[0]
+#         tail_vals = unique_vals[tail_idx]
+#         self.tail_locs = {}
+#         for val in tail_vals:
+#             self.tail_locs[val.item()] = torch.where(weight == val)[0].detach().cpu()
+#             weight[weight == val] = unique_vals[counts.argmax()]
+#         unique_vals, counts = torch.unique(weight, return_counts = True)
+#         probs = counts/torch.sum(counts)
+#         weight = weight.detach().cpu()
+# 
+#         cdf = torch.cumsum(probs,dim=0)
+#         cdf = torch.cat((torch.Tensor([0.0]).to(cdf),cdf))
+#         cdf = cdf/cdf[-1:] # Normalize the final cdf value just to keep torchac happy
+#         cdf = cdf.unsqueeze(0).repeat(flattened.size(0),1)
+#         
+#         mapping = {val.item():idx.item() for val,idx in zip(unique_vals,torch.arange(unique_vals.shape[0]))}
+#         self.mapping = mapping
+#         weight.apply_(mapping.get)
+#         byte_stream = torchac.encode_float_cdf(cdf.detach().cpu(), weight.to(torch.int16))
+#         
+#         self.byte_stream, self.mapping, self.cdf = byte_stream, mapping, cdf[0].detach().cpu().numpy()
+# 
+#     def uncompress(self):
+#         import torchac
+#         cdf = torch.tensor(self.cdf).unsqueeze(0).repeat(self.num_latents*self.latent_dim,1)
+#         weight = torchac.decode_float_cdf(cdf, self.byte_stream)
+#         weight = weight.to(torch.float32)
+#         # weight = self.tail_decode(cdf, self.byte_stream, self.tail_vals, self.tail_idx)
+#         # weight = weight.to(torch.float32)
+#         inverse_mapping = {v:k for k,v in self.mapping.items()}
+#         weight.apply_(inverse_mapping.get)
+#         for val, locs in self.tail_locs.items():
+#             weight[locs] = val
+#         weight = weight.view(self.num_latents, self.latent_dim)
+#         return weight
 
 # def compress(latent):
 #     import torchac

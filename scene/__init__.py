@@ -108,7 +108,7 @@ class Scene:
 
     def save_compressed(self, iteration, quantize_params):
         point_cloud_path = os.path.join(self.model_path, "point_cloud/iteration_{}".format(iteration))
-        self.gaussians.save_compressed_pkl(os.path.join(point_cloud_path, "point_cloud_compressed.pkl"),quantize_params)
+        # self.gaussians.save_compressed_pkl(os.path.join(point_cloud_path, "point_cloud_compressed.pkl"),quantize_params)
 
     def save_best(self):
         point_cloud_path = os.path.join(self.model_path, "point_cloud_best")
@@ -116,7 +116,7 @@ class Scene:
     
     def save_best_compressed(self, quantize_params):
         point_cloud_path = os.path.join(self.model_path, "point_cloud_best")
-        self.gaussians.save_compressed_pkl(os.path.join(point_cloud_path, "point_cloud_compressed.pkl"),quantize_params)
+        # self.gaussians.save_compressed_pkl(os.path.join(point_cloud_path, "point_cloud_compressed.pkl"),quantize_params)
 
     def link_best(self, iteration):
         src_dir = os.path.join(os.getcwd(), self.model_path, "point_cloud_best")
