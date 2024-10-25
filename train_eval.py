@@ -37,7 +37,7 @@ import hashlib
 from collections import OrderedDict
 from tqdm import tqdm
 from utils.general_utils import DecayScheduler
-from utils.image_utils import lpips_metric, psnr, resize_image, downsample_image, blur_image, ssim_metric
+from utils.image_utils import lpips_metric, psnr, resize_image, downsample_image, blur_image
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeParams
 
@@ -386,7 +386,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
                     lpips_test += lpips_metric(image, gt_image).mean().double()
-                    ssim_test += ssim_metric(image.unsqueeze(0), gt_image.unsqueeze(0)).mean().double()
+                    ssim_test += ssim(image, gt_image).mean().double()
                 psnr_test /= len(config['cameras'])
                 l1_test /= len(config['cameras'])
                 ssim_test /= len(config['cameras'])
