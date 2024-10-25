@@ -199,8 +199,8 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             
             if wandb_enabled:
                 wandb.log({
-                    "train_psnr": psnr(image, gt_image).mean().double(),
-                    "train_ssim": ssim(image, gt_image).mean().double(),
+                    "train/psnr": psnr(image, gt_image).mean().double(),
+                    "train/ssim": ssim(image, gt_image).mean().double(),
                 }, step=iteration)
 
             if psnr_test:
@@ -408,8 +408,8 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
 
                 if wandb_enabled:
                     wandb.log({
-                        'test_psnr': psnr_test,
-                        'test_ssim': ssim_test,
+                        'test/psnr': psnr_test,
+                        'test/ssim': ssim_test,
                     }, step=iteration)
 
         if tb_writer:
@@ -419,7 +419,10 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
 
         if wandb_enabled:
             try:
-                wandb.log({"scene/opacity_histogram": wandb.Histogram(scene.gaussians.get_opacity.detach().cpu().numpy()), "total_points": scene.gaussians.get_xyz.shape[0]}, step=iteration)
+                wandb.log(
+                    {
+                        "scene/opacity_histogram": wandb.Histogram(scene.gaussians.get_opacity.detach().cpu().numpy()), 
+                    }, step=iteration)
             except Exception as e:
                 print("total points ", scene.gaussians.get_xyz.shape[0])
                 print("opacity min max", scene.gaussians.get_opacity.detach().cpu().numpy().min(), scene.gaussians.get_opacity.detach().cpu().numpy().max())
