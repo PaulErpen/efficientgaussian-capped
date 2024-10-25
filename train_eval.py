@@ -196,6 +196,12 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             psnr_train, psnr_test = training_report(tb_writer, wandb_enabled, dataset.wandb_log_images, iteration, Ll1, loss, 
                                                     l1_loss, cur_size, iter_time, net_training_time, dataset.testing_interval, 
                                                     opt.iterations-opt.search_best_iters, scene, render, (pipe, background))
+            
+            if wandb_enabled:
+                wandb.log({
+                    "train_psnr": psnr(image, gt_image).mean().double(),
+                    "train_ssim": ssim(image, gt_image).mean().double(),
+                }, step=iteration)
 
             if psnr_test:
                 cur_psnr = psnr_test
@@ -240,7 +246,13 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                     # if iteration<1000:
                     #     print('\n[ITER {}] Densifying'.format(iteration))
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
-                    gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, args.num_max)
+                    n_created, n_deleted = gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, args.num_max)
+
+                    if wandb_enabled:
+                        wandb.log({
+                            "n_created": n_created,
+                            "n_deleted": n_deleted,
+                        }, step=iteration)
                 
                 if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
                     gaussians.reset_opacity()
@@ -339,13 +351,14 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
         tb_writer.add_scalar('elapsed', elapsed, iteration)
 
     if wandb_enabled:
-        wandb.log({"train_loss_patches/l1_loss": Ll1.item(), 
-                   "train_loss_patches/total_loss": loss.item(), 
-                   "num_points": scene.gaussians.get_xyz.shape[0],
-                   "iter_time": iter_time,
-                   "elapsed": elapsed,
-                   "size": size
-                   }, step=iteration)
+        wandb.log({
+            # "train_loss_patches/l1_loss": Ll1.item(), 
+            # "train_loss_patches/total_loss": loss.item(), 
+            "n_gaussians": scene.gaussians.get_xyz.shape[0],
+            # "iter_time": iter_time,
+            # "elapsed": elapsed,
+            # "size": size
+        }, step=iteration)
 
     # Report test and samples of training set
     if iteration % testing_interval ==0:
@@ -395,9 +408,8 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
 
                 if wandb_enabled:
                     wandb.log({
-                        config['name'] + '/loss_viewpoint/l1_loss': l1_test, 
-                        config['name'] + '/loss_viewpoint/psnr': psnr_test,
-                        config['name'] + '/loss_viewpoint/ssim': ssim_test,
+                        'test_psnr': psnr_test,
+                        'test_ssim': ssim_test,
                     }, step=iteration)
 
         if tb_writer:

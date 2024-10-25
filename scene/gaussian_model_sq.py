@@ -644,6 +644,8 @@ class GaussianModelSQ(GaussianModel):
         # grads = torch.norm(self.xyz_gradient_accum, dim=-1, keepdim=True)/ self.denom
         grads[grads.isnan()] = 0.0
 
+        n_start = self.get_xyz.shape[0]
+
         if num_max is not None:
             diff = num_max - self.get_xyz.shape[0]
             top_grads_index = get_top_k_indices(torch.norm(grads, dim=-1), diff)
@@ -658,6 +660,8 @@ class GaussianModelSQ(GaussianModel):
         self.densify_and_split(grads, max_grad, extent, mask_top=mask_top)
         print(f"Number of points after split: {self.get_xyz.shape[0]}")
 
+        n_created = self.get_xyz.shape[0] - n_start
+
         assert self.get_xyz.shape[0] <= num_max, f"Densification failed, number of points exceeds the maximum: {self.get_xyz.shape[0]} > {num_max}"
 
         prune_mask = (self.get_opacity < min_opacity).squeeze()
@@ -667,7 +671,11 @@ class GaussianModelSQ(GaussianModel):
             prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
         self.prune_points(prune_mask)
 
+        n_deleted = n_start - (self.get_xyz.shape[0] - n_created)
+
         torch.cuda.empty_cache()
+
+        return n_created, n_deleted
 
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
