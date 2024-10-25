@@ -581,6 +581,7 @@ def evaluate(images, scene_dir, iteration, wandb_enabled=False):
     return full_dict
 
 if __name__ == "__main__":
+    wandb_run = None
     try:
         # Config file is used for argument defaults. Command line arguments override config file.
         config_path = sys.argv[sys.argv.index("--config")+1] if "--config" in sys.argv else None
@@ -613,7 +614,6 @@ if __name__ == "__main__":
         parser.add_argument('--delete_pc', action='store_true', default=False)
         parser.add_argument("--save_compressed", action="store_true")
         parser.add_argument("--num_max", type=int, default=None)
-        parser.add_argument("--n_start_gaussians", type=int, default=None)
 
         parser.add_argument("--render_iteration", default=-1, type=int)
         parser.add_argument("--skip_train", action="store_true")
