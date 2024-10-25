@@ -22,6 +22,7 @@ from random import Random
 from PIL import Image
 from utils.loss_utils import l1_loss, ssim, scaled_l1_loss
 from gaussian_renderer import render, network_gui
+from lpipsPyTorch import lpips
 import torch.utils.benchmark as benchmark
 from collections import defaultdict
 from pathlib import Path
@@ -552,7 +553,7 @@ def evaluate(images, scene_dir, iteration, wandb_enabled=False):
             render, gt = renders[idx].unsqueeze(0)[:, :3, :, :].cuda(), gts[idx].unsqueeze(0)[:, :3, :, :].cuda()
             ssims.append(ssim(render, gt))
             psnrs.append(psnr(render, gt))
-            lpipss.append(lpips_metric(render, gt))
+            lpipss.append(lpips(render, gt, net_type='vgg'))
 
         print("  SSIM : {:>12.7f}".format(torch.tensor(ssims).mean(), ".5"))
         print("  PSNR : {:>12.7f}".format(torch.tensor(psnrs).mean(), ".5"))
