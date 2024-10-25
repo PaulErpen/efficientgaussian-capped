@@ -367,7 +367,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
                     _, viewpoint.image_height, viewpoint.image_width = gt_image.shape
                     
-                    if (idx < 5):
+                    if idx == 1: # Only upload one test view
                         if tb_writer:
                             tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
                             if iteration == testing_interval:
