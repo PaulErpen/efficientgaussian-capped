@@ -20,7 +20,6 @@ from random import Random
 from PIL import Image
 from utils.loss_utils import l1_loss, ssim, scaled_l1_loss
 from gaussian_renderer import render, network_gui
-import torch.utils.benchmark as benchmark
 from pathlib import Path
 import sys
 import socket

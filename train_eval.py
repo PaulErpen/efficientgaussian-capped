@@ -22,7 +22,7 @@ from random import Random
 from PIL import Image
 from utils.loss_utils import l1_loss, ssim, scaled_l1_loss
 from gaussian_renderer import render, network_gui
-import torch.utils.benchmark as benchmark
+# import torch.utils.benchmark as benchmark
 from collections import defaultdict
 from pathlib import Path
 import sys
@@ -491,15 +491,15 @@ def render_fn(views, gaussians, pipeline, background, use_amp):
 def measure_fps(scene, gaussians, pipeline, background, use_amp):
     with torch.no_grad():
         views = scene.getTrainCameras() + scene.getTestCameras()
-        t0 = benchmark.Timer(stmt='render_fn(views, gaussians, pipeline, background, use_amp)',
-                            setup='from __main__ import render_fn',
-                            globals={'views': views, 'gaussians': gaussians, 'pipeline': pipeline, 
-                                     'background': background, 'use_amp': use_amp},
-                            )
-        time = t0.timeit(50)
-        fps = len(views)/time.median
-        print("Rendering FPS: ", fps)
-    return fps
+        # t0 = benchmark.Timer(stmt='render_fn(views, gaussians, pipeline, background, use_amp)',
+        #                     setup='from __main__ import render_fn',
+        #                     globals={'views': views, 'gaussians': gaussians, 'pipeline': pipeline, 
+        #                              'background': background, 'use_amp': use_amp},
+        #                     )
+        # time = t0.timeit(50)
+        # fps = len(views)/time.median
+        # print("Rendering FPS: ", fps)
+    return np.NaN
         
 
 
