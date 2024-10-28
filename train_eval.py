@@ -115,6 +115,9 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
 
     lpips = LPIPS('vgg', '0.1').to('cuda')
 
+    cum_deleted = 0
+    cum_created = 0
+
     for iteration in range(first_iter, opt.iterations + 1): 
         # if iteration==(opt.iterations//2):
         #     gaussians.to_hc()
@@ -266,9 +269,11 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                 n_deleted = n_pruned + n_deleted
 
             if wandb_enabled:
+                cum_deleted = cum_deleted + n_deleted
+                cum_created = cum_created + n_created
                 wandb.log({
-                    "n_created": n_created,
-                    "n_deleted": n_deleted,
+                    "cum_deleted": cum_deleted,
+                    "cum_created": cum_created,
                 }, step=iteration)
 
             # Optimizer step
