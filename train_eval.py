@@ -233,6 +233,9 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             if iteration < opt.prune_until_iter:
                 gaussians.add_influence_stats(render_pkg["influence"])
 
+            n_created = 0
+            n_deleted = 0
+
             # Densification
             if (iteration < opt.densify_until_iter
                 and (args.num_max is None or gaussians.get_xyz.shape[0] < args.num_max)):
@@ -250,17 +253,20 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     n_created, n_deleted = gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, args.num_max)
 
-                    if wandb_enabled:
-                        wandb.log({
-                            "n_created": n_created,
-                            "n_deleted": n_deleted,
-                        }, step=iteration)
-                
                 if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
                     gaussians.reset_opacity()
 
             if iteration % opt.infl_prune_interval == 0 and iteration<opt.prune_until_iter:
+                n_before = gaussians.get_xyz.shape[0]
                 gaussians.prune_influence(quantile_threshold=opt.quantile_threshold)
+                n_pruned = n_before - gaussians.get_xyz.shape[0]
+                n_deleted = n_pruned + n_deleted
+
+            if wandb_enabled:
+                wandb.log({
+                    "n_created": n_created,
+                    "n_deleted": n_deleted,
+                }, step=iteration)
 
             # Optimizer step
             if iteration < opt.iterations:
