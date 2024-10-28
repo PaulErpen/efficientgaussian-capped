@@ -39,6 +39,7 @@ from utils.general_utils import DecayScheduler
 from utils.image_utils import psnr, resize_image, downsample_image, blur_image
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeParams
+from lpipsPyTorch import lpips
 
 try:
     import wandb
@@ -201,6 +202,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                 wandb.log({
                     "train/psnr": psnr(image, gt_image).mean().double(),
                     "train/ssim": ssim(image, gt_image).mean().double(),
+                    "train/ssim": lpips(image, gt_image, net_type='vgg').mean().double(),
                 }, step=iteration)
 
             if psnr_test:
@@ -373,6 +375,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                 l1_test = 0.0
                 psnr_test = 0.0
                 ssim_test = 0.0
+                lpipss = []
                 for idx, viewpoint in enumerate(config['cameras']):
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, *renderArgs)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
@@ -397,6 +400,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
                     ssim_test += ssim(image, gt_image).mean().double()
+                    lpipss.append(lpips(image, gt_image, net_type='vgg'))                    
                 psnr_test /= len(config['cameras'])
                 l1_test /= len(config['cameras'])
                 ssim_test /= len(config['cameras'])
@@ -410,6 +414,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     wandb.log({
                         'test/psnr': psnr_test,
                         'test/ssim': ssim_test,
+                        'test/lpips': torch.tensor(lpipss).mean()
                     }, step=iteration)
 
         if tb_writer:
