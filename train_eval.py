@@ -27,7 +27,7 @@ from collections import defaultdict
 from pathlib import Path
 import sys
 import socket
-from scene import Scenewandb_key, GaussianModelSQ
+from scene import Scene, GaussianModelSQ
 from compress.decoders import LatentDecoder
 from compress.inf_loss import EntropyLoss
 from utils.general_utils import safe_state, sample_camera_order, mean_distances
