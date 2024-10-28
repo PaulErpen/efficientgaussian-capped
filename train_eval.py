@@ -39,7 +39,7 @@ from utils.general_utils import DecayScheduler
 from utils.image_utils import psnr, resize_image, downsample_image, blur_image
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, QuantizeParams
-from lpipsPyTorch import lpips
+from lpipsPyTorch.modules.lpips import LPIPS
 
 try:
     import wandb
@@ -112,6 +112,9 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
     best_state_dict = None
     best_train_psnr = 0.0
     best_iter = 0
+
+    lpips = LPIPS('vgg', '0.1').to('cuda')
+
     for iteration in range(first_iter, opt.iterations + 1): 
         # if iteration==(opt.iterations//2):
         #     gaussians.to_hc()
@@ -196,13 +199,13 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             net_training_time += iter_time
             psnr_train, psnr_test = training_report(tb_writer, wandb_enabled, dataset.wandb_log_images, iteration, Ll1, loss, 
                                                     l1_loss, cur_size, iter_time, net_training_time, dataset.testing_interval, 
-                                                    opt.iterations-opt.search_best_iters, scene, render, (pipe, background))
+                                                    opt.iterations-opt.search_best_iters, scene, render, (pipe, background), lpips)
             
             if wandb_enabled:
                 wandb.log({
                     "train/psnr": psnr(image, gt_image).mean().double(),
                     "train/ssim": ssim(image, gt_image).mean().double(),
-                    "train/lpips": lpips(image, gt_image, net_type='vgg').mean().double(),
+                    "train/lpips": lpips(image, gt_image).mean().double(),
                 }, step=iteration)
 
             if psnr_test:
@@ -350,7 +353,7 @@ def prepare_output_and_logger(args, all_args):
     return tb_writer, wandb_run
 
 def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, loss, l1_loss, size, 
-                    iter_time, elapsed, testing_interval, search_best, scene : Scene, renderFunc, renderArgs):
+                    iter_time, elapsed, testing_interval, search_best, scene : Scene, renderFunc, renderArgs, lpips):
     if tb_writer:
         tb_writer.add_scalar('train_loss_patches/l1_loss', Ll1.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
@@ -405,7 +408,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
                     ssim_test += ssim(image, gt_image).mean().double()
-                    lpipss.append(lpips(image, gt_image, net_type='vgg'))                    
+                    lpipss.append(lpips(image, gt_image))                    
                 psnr_test /= len(config['cameras'])
                 l1_test /= len(config['cameras'])
                 ssim_test /= len(config['cameras'])
