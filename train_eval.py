@@ -202,7 +202,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                 wandb.log({
                     "train/psnr": psnr(image, gt_image).mean().double(),
                     "train/ssim": ssim(image, gt_image).mean().double(),
-                    "train/ssim": lpips(image, gt_image, net_type='vgg').mean().double(),
+                    "train/lpips": lpips(image, gt_image, net_type='vgg').mean().double(),
                 }, step=iteration)
 
             if psnr_test:
@@ -336,11 +336,10 @@ def prepare_output_and_logger(args, all_args):
         wandb_mode = args.wandb_mode
         id = hashlib.md5(wandb_run_name.encode('utf-8')).hexdigest()
         # name = os.path.basename(args.model_path) if wandb_run_name is None else wandb_run_name
-        name = os.path.basename(args.source_path)+'_'+str(id)
         wandb.login(key=all_args.wandb_key)
         wandb_run = wandb.init(
             project=wandb_project,
-            name=name,
+            name=wandb_run_name,
             config=all_args,
             sync_tensorboard=False,
             dir=args.model_path,
