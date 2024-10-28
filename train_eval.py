@@ -27,7 +27,7 @@ from collections import defaultdict
 from pathlib import Path
 import sys
 import socket
-from scene import Scene, GaussianModelSQ
+from scene import Scenewandb_key, GaussianModelSQ
 from compress.decoders import LatentDecoder
 from compress.inf_loss import EntropyLoss
 from utils.general_utils import safe_state, sample_camera_order, mean_distances
@@ -681,7 +681,6 @@ if __name__ == "__main__":
 
         # All done
         print("\nTraining complete.")
-    except Exception as e:
+    finally:
         if wandb_run is not None:
             wandb_run.finish()
-        raise e
