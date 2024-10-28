@@ -198,7 +198,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             iter_time = iter_start.elapsed_time(iter_end)
             net_training_time += iter_time
             psnr_train, psnr_test = training_report(tb_writer, wandb_enabled, dataset.wandb_log_images, iteration, Ll1, loss, 
-                                                    l1_loss, cur_size, iter_time, net_training_time, dataset.testing_interval, 
+                                                    l1_loss, cur_size, iter_time, net_training_time, args.testing_iterations, 
                                                     opt.iterations-opt.search_best_iters, scene, render, (pipe, background), lpips)
             
             if wandb_enabled:
@@ -353,7 +353,7 @@ def prepare_output_and_logger(args, all_args):
     return tb_writer, wandb_run
 
 def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, loss, l1_loss, size, 
-                    iter_time, elapsed, testing_interval, search_best, scene : Scene, renderFunc, renderArgs, lpips):
+                    iter_time, elapsed, testing_iterations, search_best, scene : Scene, renderFunc, renderArgs, lpips):
     if tb_writer:
         tb_writer.add_scalar('train_loss_patches/l1_loss', Ll1.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
@@ -371,7 +371,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
         }, step=iteration)
 
     # Report test and samples of training set
-    if iteration % testing_interval ==0:
+    if iteration in testing_iterations:
         torch.cuda.empty_cache()
         validation_configs = ({'name': 'test', 'cameras' : scene.getTestCameras()},)
         if iteration>=search_best:
@@ -636,6 +636,8 @@ if __name__ == "__main__":
         parser.add_argument("--skip_train", action="store_true")
         parser.add_argument("--skip_test", action="store_true")
         parser.add_argument("--wandb_key", type=str, default="")
+
+        parser.add_argument("--testing_iterations", nargs="+", type=int, default=[])
         args = parser.parse_args(sys.argv[1:])
         
         # args.save_iterations.append(args.iterations)
