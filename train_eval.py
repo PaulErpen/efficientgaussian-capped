@@ -392,11 +392,11 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     if idx == 1: # Only upload one test view
                         if tb_writer:
                             tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
-                            if iteration == testing_interval:
+                            if iteration == testing_iterations[0]:
                                 tb_writer.add_images(config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name), gt_image[None], global_step=iteration)
 
                         if wandb_enabled and wandb_log_images:
-                            if iteration == testing_interval:
+                            if iteration == testing_iterations[0]:
                                 gt_log_image = torch.transpose(gt_image, 0, 2)
                                 wandb.log({config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name): 
                                            wandb.Image(gt_log_image.detach().cpu().numpy(), caption="ground_truth")}, 
