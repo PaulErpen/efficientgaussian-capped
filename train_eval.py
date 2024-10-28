@@ -388,7 +388,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                 l1_test = 0.0
                 psnr_test = 0.0
                 ssim_test = 0.0
-                lpipss = []
+                #lpipss = []
                 for idx, viewpoint in enumerate(config['cameras']):
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, *renderArgs)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
@@ -413,7 +413,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
                     ssim_test += ssim(image, gt_image).mean().double()
-                    lpipss.append(lpips(image, gt_image))                    
+                    # lpipss.append(lpips(image, gt_image))                    
                 psnr_test /= len(config['cameras'])
                 l1_test /= len(config['cameras'])
                 ssim_test /= len(config['cameras'])
@@ -427,7 +427,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                     wandb.log({
                         'test/psnr': psnr_test,
                         'test/ssim': ssim_test,
-                        'test/lpips': torch.tensor(lpipss).mean()
+                        # 'test/lpips': torch.tensor(lpipss).mean()
                     }, step=iteration)
 
         if tb_writer:
