@@ -208,7 +208,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                 wandb.log({
                     "train/psnr": psnr(image, gt_image).mean().double(),
                     "train/ssim": ssim(image, gt_image).mean().double(),
-                    "train/lpips": lpips(image, gt_image).mean().double(),
+                    # "train/lpips": lpips(image, gt_image).mean().double(),
                 }, step=iteration)
 
             if psnr_test:
