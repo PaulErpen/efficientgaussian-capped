@@ -268,6 +268,7 @@ def readNerfSyntheticInfo(path, white_background, eval, extension=".png", n_star
     
     if n_start_gaussians is not None and pcd is not None:
         print("Subsampling point cloud")
+        np.random.seed(123)
         chosen_points = np.random.choice(pcd.points.shape[0], n_start_gaussians, replace=False)
         pcd = BasicPointCloud(pcd.points[chosen_points], pcd.colors[chosen_points], pcd.normals[chosen_points])
 
