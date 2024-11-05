@@ -445,7 +445,7 @@ def training_report(tb_writer, wandb_enabled, wandb_log_images, iteration, Ll1, 
                 raise e
             
         torch.cuda.empty_cache()
-        return psnr_configs['train'] if 'train' in psnr_configs else None, psnr_configs['test']
+        return psnr_configs['train_full'] if 'train_full' in psnr_configs else None, psnr_configs['test_full']
     return None, None
         
 
