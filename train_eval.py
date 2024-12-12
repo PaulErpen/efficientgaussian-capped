@@ -56,7 +56,7 @@ def get_gpu_memory():
     return memory_used_values
 
 
-def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_iterations, checkpoint, debug_from, parse_args, tb_writer, args):
+def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_iterations, checkpoint, debug_from, parse_args, tb_writer, args) -> None:
     first_iter = 0
     generator = Random(0)
     wandb_enabled = WANDB_FOUND and parse_args.use_wandb
@@ -117,6 +117,14 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
 
     cum_deleted = 0
     cum_created = 0
+
+    early_stopping_handler = EarlyStoppingHandler(
+        use_early_stopping=args.use_early_stopping,
+        start_early_stopping_iteration=args.start_early_stopping_iteration,
+        grace_periods=parse_grace_periods(args.early_stopping_grace_periods),
+        early_stopping_check_interval=len(scene.getTrainCameras()),
+        n_patience_epochs=args.n_patience_epochs
+    )
 
     for iteration in range(first_iter, opt.iterations + 1): 
         # if iteration==(opt.iterations//2):
@@ -241,6 +249,14 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
 
             n_created = 0
             n_deleted = 0
+
+            if early_stopping_handler.stop_early(
+                step=iteration,
+                test_cameras=scene.getTestCameras(),
+                render_func=lambda camera: render(camera, scene.gaussians, pipe, background)["render"]
+            ):
+                scene.save(iteration)
+                break
 
             # Densification
             if (iteration < opt.densify_until_iter
@@ -641,6 +657,11 @@ if __name__ == "__main__":
         parser.add_argument("--skip_train", action="store_true")
         parser.add_argument("--skip_test", action="store_true")
         parser.add_argument("--wandb_key", type=str, default="")
+
+        parser.add_argument("--use_early_stopping", default=False, action="store_true")
+        parser.add_argument("--early_stopping_grace_periods", type=str)
+        parser.add_argument("--start_early_stopping_iteration", type=int)
+        parser.add_argument("--n_patience_epochs", type=int, default=3)
 
         parser.add_argument("--testing_iterations", nargs="+", type=int, default=[])
         args = parser.parse_args(sys.argv[1:])
