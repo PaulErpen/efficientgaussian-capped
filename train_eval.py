@@ -255,7 +255,6 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
                 step=iteration,
                 test_cameras=scene.getTestCameras(),
                 render_func=lambda camera: render(camera, scene.gaussians, pipe, background)["render"],
-                save_best=lambda: scene.save(iteration)
             ):
                 scene.save(iteration)
                 break
