@@ -114,7 +114,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
     best_train_psnr = 0.0
     best_iter = 0
 
-    lpips = LPIPS('vgg', '0.1').to('cuda')
+    # lpips = LPIPS('vgg', '0.1').to('cuda')
 
     cum_deleted = 0
     cum_created = 0
@@ -211,7 +211,7 @@ def training(seed, dataset, opt, pipe, quantize, saving_iterations, checkpoint_i
             net_training_time += iter_time
             psnr_train, psnr_test = training_report(tb_writer, wandb_enabled, dataset.wandb_log_images, iteration, Ll1, loss, 
                                                     l1_loss, cur_size, iter_time, net_training_time, args.testing_iterations, 
-                                                    opt.iterations-opt.search_best_iters, scene, render, (pipe, background), lpips)
+                                                    opt.iterations-opt.search_best_iters, scene, render, (pipe, background), 0)
             
             if wandb_enabled:
                 wandb.log({
